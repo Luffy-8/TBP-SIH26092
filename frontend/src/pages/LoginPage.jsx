@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, User, Lock, AlertCircle } from 'lucide-react';
+import LogoGraphic from '../assets/logo-graphic.png';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -26,11 +27,11 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo / Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-500 rounded-2xl mb-4 shadow-lg">
-            <span className="text-white text-2xl font-bold">LS</span>
+          <div className="inline-flex items-center justify-center mb-4">
+            <img src={LogoGraphic} alt="Loan Saathi Logo" className="h-20 w-auto drop-shadow-md" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Loan Saathi</h1>
-          <p className="text-gray-500 mt-1">AI-driven scheme matching for entrepreneurs</p>
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Loan Saathi</h1>
+          <p className="text-gray-500 mt-1 text-sm">AI-driven scheme matching for entrepreneurs</p>
         </div>
 
         {/* Card */}
