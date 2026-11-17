@@ -4,6 +4,7 @@ import api from '../api/client';
 import Header from '../components/Header';
 import SchemeCard from '../components/SchemeCard';
 import DocumentChecklist from '../components/DocumentChecklist';
+import ChannelPartnerCards from '../components/ChannelPartnerCards';
 import { useAuth } from '../context/AuthContext';
 
 const SAMPLE_PERSONAS = [
@@ -389,6 +390,11 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
+
+            {/* Local Channel Partner Cards (Feature 5: Section 4.5) */}
+            {result.matched_count > 0 && (
+              <ChannelPartnerCards city={result.extracted_profile?.city} />
+            )}
           </div>
         )}
       </main>
