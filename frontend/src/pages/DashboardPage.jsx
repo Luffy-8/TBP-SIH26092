@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Mic, MicOff, Send, Loader2, Sparkles } from 'lucide-react';
 import api from '../api/client';
+import Header from '../components/Header';
 import SchemeCard from '../components/SchemeCard';
 import DocumentChecklist from '../components/DocumentChecklist';
 import { useAuth } from '../context/AuthContext';
@@ -80,29 +81,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-              <span className="text-white text-xs font-bold">LS</span>
-            </div>
-            <span className="font-bold text-gray-900">Loan Saathi</span>
-            <span className="hidden sm:block text-xs text-gray-400 ml-1">· SIH26092</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-600 hidden sm:block">
-              👋 {user?.username}
-            </span>
-            <button
-              onClick={logout}
-              className="text-xs text-gray-500 hover:text-red-500 border border-gray-200 hover:border-red-200 px-3 py-1.5 rounded-lg transition"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </nav>
+      <Header />
 
       <main className="max-w-5xl mx-auto px-4 py-8">
         {/* Hero Section */}
