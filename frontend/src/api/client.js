@@ -1,7 +1,14 @@
 import axios from 'axios';
 
+// Support VITE_API_BASE_URL in production (Vercel -> Render)
+// Fall back to '/api' in local development (proxied by Vite to localhost:5000)
+const rawBaseURL = import.meta.env.VITE_API_BASE_URL || '/api';
+const baseURL = rawBaseURL.endsWith('/api')
+  ? rawBaseURL
+  : `${rawBaseURL.replace(/\/+$/, '')}/api`;
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL,
 });
 
 // Auto-attach JWT from localStorage on every request

@@ -15,6 +15,10 @@ const connectDB = async () => {
 
     console.log(`✅ MongoDB Connected: ${conn.connection.host}/${conn.connection.name}`);
 
+    // Automatically seed default demo user and schemes if not present
+    const autoSeedDatabase = require('./autoSeed');
+    await autoSeedDatabase();
+
     // Connection event listeners
     mongoose.connection.on('error', (err) => {
       console.error(`❌ MongoDB connection error: ${err.message}`);
