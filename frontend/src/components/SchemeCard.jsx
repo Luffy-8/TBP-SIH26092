@@ -7,7 +7,9 @@ import {
   ChevronUp,
   ShieldCheck,
   Award,
+  Calculator,
 } from 'lucide-react';
+import SchemeEmiCalculator from './SchemeEmiCalculator';
 
 const AUTHORITY_COLORS = {
   NSFDC: 'bg-blue-50 text-blue-800 border-blue-200',
@@ -26,6 +28,7 @@ function getAuthorityTag(authority) {
 export default function SchemeCard({ scheme, breakdown }) {
   const [docsExpanded, setDocsExpanded] = useState(false);
   const [auditExpanded, setAuditExpanded] = useState(false);
+  const [emiExpanded, setEmiExpanded] = useState(false);
   const { key, cls } = getAuthorityTag(scheme.issuing_authority);
 
   const auditChecks = scheme.eligibility_audit || [];
@@ -122,7 +125,36 @@ export default function SchemeCard({ scheme, breakdown }) {
         )}
       </div>
 
-      {/* Collapsible Section 2: The "Audit Trail" Accordion (Feature 2) */}
+      {/* Collapsible Section 2: Interactive Subsidy & EMI Slider (Feature 3) */}
+      <div className="border-t border-gray-100">
+        <button
+          type="button"
+          onClick={() => setEmiExpanded(!emiExpanded)}
+          className="w-full px-5 py-3 flex items-center justify-between text-xs font-bold text-gray-900 hover:bg-orange-50/50 transition cursor-pointer"
+        >
+          <span className="flex items-center gap-2">
+            <Calculator size={15} className="text-orange-600" />
+            <span>Interactive Subsidy & EMI Slider</span>
+            <span className="text-[10px] font-extrabold bg-orange-100 text-orange-800 border border-orange-200 px-2 py-0.5 rounded-full">
+              Calculate Savings
+            </span>
+          </span>
+          <div className="flex items-center gap-1 text-gray-500">
+            <span className="text-[11px] font-medium hidden sm:inline">
+              {emiExpanded ? 'Hide' : 'Calculate'}
+            </span>
+            {emiExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </div>
+        </button>
+
+        {emiExpanded && (
+          <div className="px-5 pb-4 pt-1 animate-fadeIn">
+            <SchemeEmiCalculator scheme={scheme} />
+          </div>
+        )}
+      </div>
+
+      {/* Collapsible Section 3: The "Audit Trail" Accordion (Feature 2) */}
       {auditChecks.length > 0 && (
         <div className="border-t border-gray-100">
           <button
