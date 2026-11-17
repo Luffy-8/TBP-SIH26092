@@ -5,7 +5,7 @@ export default function Header() {
   const { user, logout } = useAuth();
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-xs">
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-xs print:hidden">
       <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Brand Section */}
         <div className="flex items-center gap-3">

@@ -107,12 +107,39 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 print:bg-white print:p-0">
       <Header />
 
-      <main className="max-w-5xl mx-auto px-4 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-8">
+      <main className="max-w-5xl mx-auto px-4 py-8 print:py-0 print:px-0 print:max-w-none">
+        {/* Print-Only Official Header */}
+        <div className="hidden print:block mb-6 pb-4 border-b-2 border-gray-900">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-black text-gray-900 tracking-tight">
+                LOAN SAATHI — SCHEME APPLICATION PACKET
+              </h1>
+              <p className="text-xs font-semibold text-gray-700 mt-0.5">
+                Ministry of Social Justice & Empowerment · Scheme ID: SIH26092
+              </p>
+            </div>
+            <div className="text-right text-xs text-gray-600">
+              <p className="font-bold text-gray-900">Applicant: {user?.username}</p>
+              <p>Generated: {new Date().toLocaleDateString('en-IN')}</p>
+            </div>
+          </div>
+
+          {result?.extracted_profile && (
+            <div className="mt-3 pt-2 border-t border-gray-300 text-xs flex gap-5 text-gray-800 font-medium">
+              <span><strong>Category:</strong> {result.extracted_profile.category || 'N/A'}</span>
+              <span><strong>Annual Income:</strong> ₹{result.extracted_profile.annual_income?.toLocaleString('en-IN') || 'N/A'}/yr</span>
+              <span><strong>Age:</strong> {result.extracted_profile.age || 'N/A'} yrs</span>
+              <span><strong>City/District:</strong> {result.extracted_profile.city || 'N/A'}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Hero Section (Hidden on Print) */}
+        <div className="text-center mb-8 print:hidden">
           <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
             <Sparkles size={12} />
             AI-Powered Scheme Matching · Ministry of Social Justice & Empowerment
@@ -126,8 +153,8 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Input Card with Enhanced Voice UX & Sample Personas */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+        {/* Input Card with Enhanced Voice UX & Sample Personas (Hidden on Print) */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8 print:hidden">
           {/* Header & Quick Personas */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
             <label className="block text-sm font-bold text-gray-900">
@@ -366,8 +393,8 @@ export default function DashboardPage() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-200 py-6 mt-16">
+      {/* Footer (Hidden on Print) */}
+      <footer className="border-t border-gray-200 py-6 mt-16 print:hidden">
         <p className="text-center text-xs text-gray-400">
           Loan Saathi (SIH26092) · Ministry of Social Justice & Empowerment ·
           AI-driven scheme matching for marginalized entrepreneurs
