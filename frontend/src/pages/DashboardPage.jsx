@@ -16,9 +16,15 @@ const SAMPLE_PERSONAS = [
   },
   {
     id: 'artisan',
-    label: '👞 SC Leather Artisan',
+    label: '👞 SC Artisan (Lucknow)',
     role: 'SC Footwear Maker',
     text: "I am a 25-year-old SC entrepreneur from Lucknow running a small handicraft shop. My annual family income is around 1.8 lakhs and I am looking for a concessional loan to buy raw materials.",
+  },
+  {
+    id: 'hyderabad-artisan',
+    label: '🧵 SC Artisan (Hyderabad)',
+    role: 'SC Handloom Artisan',
+    text: "I am a 26-year-old SC entrepreneur from Hyderabad running a small handloom weaving unit. My annual family income is around 1.75 lakhs and I need a concessional loan to buy raw materials and machinery.",
   },
   {
     id: 'women-tailor',

@@ -1,43 +1,143 @@
 import { MapPin, Navigation, Phone, Clock, Building, ExternalLink } from 'lucide-react';
 
-export default function ChannelPartnerCards({ city }) {
-  const currentCity = city || 'Lucknow';
+const PARTNERS_DATABASE = {
+  hyderabad: {
+    displayCity: 'Hyderabad',
+    partners: [
+      {
+        id: 'hyd-sca',
+        name: 'Telangana State Scheduled Castes Co-operative Finance Corporation (TSSCCFC)',
+        type: 'Official MoSJE Channelizing Agency',
+        branch: 'Hyderabad District & State Head Office',
+        address: '5th Floor, DSS Bhavan, Masab Tank, Hyderabad, Telangana 500028',
+        hours: 'Mon – Fri, 10:00 AM – 5:00 PM',
+        phone: '040-23391234 / 1800-425-1234',
+        role: 'Direct subsidy disbursement, application verification & NSFDC/NSKFDC facilitation',
+        query: 'Telangana State Scheduled Castes Co-operative Finance Corporation DSS Bhavan Masab Tank Hyderabad',
+      },
+      {
+        id: 'hyd-bank',
+        name: 'SBI Hyderabad Main Branch (Lead Bank Office)',
+        type: 'Public Sector Lead Bank',
+        branch: 'Hyderabad Main Administrative Branch',
+        address: 'Bank Street, Koti, Hyderabad, Telangana 500095',
+        hours: 'Mon – Sat, 10:00 AM – 4:00 PM',
+        phone: '040-23466100 / 1800-1234-724',
+        role: 'Concessional term loan sanctions, Mudra/PM-DAKSH & Stand-Up India credit processing',
+        query: 'State Bank of India Hyderabad Main Branch Bank Street Koti Hyderabad',
+      },
+      {
+        id: 'hyd-dic',
+        name: 'District Industries Centre (DIC) Hyderabad',
+        type: 'MSME & Entrepreneurship Support Cell',
+        branch: 'Hyderabad District Industries Centre',
+        address: 'Chirag Ali Lane, Abids, Hyderabad, Telangana 500001',
+        hours: 'Mon – Fri, 9:30 AM – 5:30 PM',
+        phone: '040-23201400',
+        role: 'Project report preparation support, EDP training & margin money subsidy clearance',
+        query: 'District Industries Centre Chirag Ali Lane Abids Hyderabad',
+      },
+    ],
+  },
+  lucknow: {
+    displayCity: 'Lucknow',
+    partners: [
+      {
+        id: 'lko-sca',
+        name: 'State Scheduled Castes Development Corporation (SCA)',
+        type: 'Official MoSJE Channelizing Agency',
+        branch: 'Lucknow District Office',
+        address: 'Vikas Bhawan, Collectorate Complex, Lucknow, Uttar Pradesh 226001',
+        hours: 'Mon – Fri, 10:00 AM – 5:00 PM',
+        phone: '0522-2621000 / 1800-180-8000',
+        role: 'Direct subsidy disbursement, application verification & NSFDC/NSKFDC facilitation',
+        query: 'State Scheduled Castes Development Corporation Vikas Bhawan Lucknow',
+      },
+      {
+        id: 'lko-bank',
+        name: 'State Bank of India — Lead District Office',
+        type: 'Public Sector Lead Bank',
+        branch: 'Lucknow Main Administrative Branch',
+        address: 'Station Road, Civil Lines, Lucknow, Uttar Pradesh 226001',
+        hours: 'Mon – Sat, 10:00 AM – 4:00 PM',
+        phone: '0522-2234000 / 1800-1234-724',
+        role: 'Concessional term loan sanctions, Mudra/PM-DAKSH credit line processing',
+        query: 'Lead Bank District Office SBI Station Road Civil Lines Lucknow',
+      },
+      {
+        id: 'lko-dic',
+        name: 'District Industries Centre (DIC)',
+        type: 'MSME & Entrepreneurship Support Cell',
+        branch: 'Industrial Area Office, Lucknow',
+        address: 'DIC Compound, Near Subhash Chowk, Lucknow, Uttar Pradesh 226007',
+        hours: 'Mon – Fri, 9:30 AM – 5:30 PM',
+        phone: '0522-2435000',
+        role: 'Project report preparation support, EDP training & margin money subsidy clearance',
+        query: 'District Industries Centre DIC Compound Near Subhash Chowk Lucknow',
+      },
+    ],
+  },
+};
 
-  const PARTNERS = [
-    {
-      id: 1,
-      name: `State Scheduled Castes Development Corporation (SCA)`,
-      type: 'Official MoSJE Channelizing Agency',
-      branch: `${currentCity} District Office`,
-      address: `Vikas Bhawan, Collectorate Complex, ${currentCity}`,
-      hours: 'Mon – Fri, 10:00 AM – 5:00 PM',
-      phone: '0522-2621000 / 1800-180-8000',
-      role: 'Direct subsidy disbursement, application verification & NSFDC/NSKFDC facilitation',
-      query: `State Scheduled Castes Development Corporation ${currentCity}`,
-    },
-    {
-      id: 2,
-      name: `State Bank of India — Lead District Office`,
-      type: 'Public Sector Lead Bank',
-      branch: `${currentCity} Main Administrative Branch`,
-      address: `Station Road, Civil Lines, ${currentCity}`,
-      hours: 'Mon – Sat, 10:00 AM – 4:00 PM',
-      phone: '1800-1234-724',
-      role: 'Concessional term loan sanctions, Mudra/PM-DAKSH credit line processing',
-      query: `Lead Bank District Office SBI ${currentCity}`,
-    },
-    {
-      id: 3,
-      name: `District Industries Centre (DIC)`,
-      type: 'MSME & Entrepreneurship Support Cell',
-      branch: `Industrial Area Office, ${currentCity}`,
-      address: `DIC Compound, Near Subhash Chowk, ${currentCity}`,
-      hours: 'Mon – Fri, 9:30 AM – 5:30 PM',
-      phone: '0522-2435000',
-      role: 'Project report preparation support, EDP training & margin money subsidy clearance',
-      query: `District Industries Centre ${currentCity}`,
-    },
-  ];
+function resolveChannelPartners(city) {
+  const rawCity = typeof city === 'string' ? city.trim() : '';
+  const normalized = rawCity.toLowerCase();
+
+  if (normalized.includes('hyderabad')) {
+    return PARTNERS_DATABASE.hyderabad;
+  }
+  if (normalized.includes('lucknow')) {
+    return PARTNERS_DATABASE.lucknow;
+  }
+
+  // Graceful fallback for any other city or default
+  if (!rawCity) {
+    return PARTNERS_DATABASE.lucknow;
+  }
+
+  const capitalizedCity = rawCity.charAt(0).toUpperCase() + rawCity.slice(1);
+  return {
+    displayCity: capitalizedCity,
+    partners: [
+      {
+        id: `dyn-sca-${capitalizedCity}`,
+        name: `State Scheduled Castes Development Corporation (SCA)`,
+        type: 'Official MoSJE Channelizing Agency',
+        branch: `${capitalizedCity} District Office`,
+        address: `Vikas Bhawan / Collectorate Complex, ${capitalizedCity}`,
+        hours: 'Mon – Fri, 10:00 AM – 5:00 PM',
+        phone: '1800-180-8000',
+        role: 'Direct subsidy disbursement, application verification & NSFDC/NSKFDC facilitation',
+        query: `State Scheduled Castes Development Corporation ${capitalizedCity}`,
+      },
+      {
+        id: `dyn-bank-${capitalizedCity}`,
+        name: `State Bank of India — Lead District Office`,
+        type: 'Public Sector Lead Bank',
+        branch: `${capitalizedCity} Main Branch`,
+        address: `Main Administrative Branch, Civil Lines, ${capitalizedCity}`,
+        hours: 'Mon – Sat, 10:00 AM – 4:00 PM',
+        phone: '1800-1234-724',
+        role: 'Concessional term loan sanctions, Mudra/PM-DAKSH credit line processing',
+        query: `State Bank of India Lead District Office ${capitalizedCity}`,
+      },
+      {
+        id: `dyn-dic-${capitalizedCity}`,
+        name: `District Industries Centre (DIC)`,
+        type: 'MSME & Entrepreneurship Support Cell',
+        branch: `Industrial Area Office, ${capitalizedCity}`,
+        address: `District Industries Centre, ${capitalizedCity}`,
+        hours: 'Mon – Fri, 9:30 AM – 5:30 PM',
+        phone: '1800-180-6763',
+        role: 'Project report preparation support, EDP training & margin money subsidy clearance',
+        query: `District Industries Centre ${capitalizedCity}`,
+      },
+    ],
+  };
+}
+
+export default function ChannelPartnerCards({ city }) {
+  const { displayCity, partners } = resolveChannelPartners(city);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mt-8 print:border-none print:shadow-none print:p-0">
@@ -49,7 +149,7 @@ export default function ChannelPartnerCards({ city }) {
           </span>
           <h2 className="text-lg sm:text-xl font-extrabold text-gray-900 flex items-center gap-2">
             <Building size={20} className="text-orange-600" />
-            Authorized Local Channel Partners ({currentCity})
+            Authorized Local Channel Partners ({displayCity})
           </h2>
           <p className="text-xs text-gray-500 mt-1">
             Visit these authorized agencies to submit your application packet and complete physical verification.
@@ -57,13 +157,13 @@ export default function ChannelPartnerCards({ city }) {
         </div>
         <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg shrink-0">
           <MapPin size={14} className="text-orange-600" />
-          <span>Location: {currentCity}</span>
+          <span>Location: {displayCity}</span>
         </div>
       </div>
 
       {/* Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {PARTNERS.map((partner) => {
+        {partners.map((partner) => {
           const directionsUrl = `https://maps.google.com/?q=${encodeURIComponent(partner.query)}`;
 
           return (
