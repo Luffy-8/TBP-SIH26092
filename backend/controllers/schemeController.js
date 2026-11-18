@@ -1,5 +1,6 @@
 const Scheme = require('../models/Scheme');
 const User = require('../models/User');
+const Partner = require('../models/Partner');
 const { extractDemographicsFromText, generateSchemeExplanation } = require('../utils/aiHelper');
 
 /**
@@ -135,6 +136,17 @@ const analyzeProfile = async (req, res, next) => {
     // 4. Grounded RAG Explanation & Document Checklist (Phase 4)
     const explanation = await generateSchemeExplanation(extractedDemographics, eligibleSchemes);
 
+    // 5. Phase 5: Geographical Localization & Authorized Channel Partners
+    const extractedCity = extractedDemographics.city;
+    let localPartners = [];
+
+    if (extractedCity && typeof extractedCity === 'string' && extractedCity.trim().length > 0) {
+      const cleanCity = extractedCity.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      localPartners = await Partner.find({
+        city: { $regex: cleanCity, $options: 'i' },
+      }).lean();
+    }
+
     res.status(200).json({
       success: true,
       message: 'Demographics extracted, schemes matched, and explanation generated successfully',
@@ -147,6 +159,7 @@ const analyzeProfile = async (req, res, next) => {
       matched_count: eligibleSchemes.length,
       schemes: eligibleSchemes,
       ai_explanation: explanation,
+      local_partners: localPartners,
     });
   } catch (error) {
     next(error);
@@ -226,12 +239,116 @@ const seedSampleSchemes = async (req, res, next) => {
       );
     }
 
+    const defaultPartners = [
+      {
+        name: 'Telangana State Scheduled Castes Co-operative Finance Corporation (TSSCCFC)',
+        type: 'SCA',
+        branch: 'Hyderabad District & State Head Office',
+        address: '5th Floor, DSS Bhavan, Masab Tank, Hyderabad, Telangana 500028',
+        city: 'Hyderabad',
+        state: 'Telangana',
+        contact: {
+          phone: '040-23391234 / 1800-425-1234',
+          hours: 'Mon – Fri, 10:00 AM – 5:00 PM',
+          email: 'support@tssccfc.telangana.gov.in',
+        },
+        role: 'Direct subsidy disbursement, application verification & NSFDC/NSKFDC facilitation',
+        query: 'Telangana State Scheduled Castes Co-operative Finance Corporation DSS Bhavan Masab Tank Hyderabad',
+      },
+      {
+        name: 'State Bank of India — Hyderabad Main Branch',
+        type: 'Bank',
+        branch: 'Lead District Office (LDO), Hyderabad Main',
+        address: 'Bank Street, Koti, Hyderabad, Telangana 500095',
+        city: 'Hyderabad',
+        state: 'Telangana',
+        contact: {
+          phone: '040-23466100 / 1800-1234-724',
+          hours: 'Mon – Sat, 10:00 AM – 4:00 PM',
+          email: 'ldo.hyderabad@sbi.co.in',
+        },
+        role: 'Concessional term loan sanctions, Mudra/PM-DAKSH & Stand-Up India credit processing',
+        query: 'State Bank of India Hyderabad Main Branch Bank Street Koti Hyderabad',
+      },
+      {
+        name: 'District Industries Centre (DIC) Hyderabad',
+        type: 'DIC',
+        branch: 'Hyderabad District Industries Centre',
+        address: 'Chirag Ali Lane, Abids, Hyderabad, Telangana 500001',
+        city: 'Hyderabad',
+        state: 'Telangana',
+        contact: {
+          phone: '040-23201400',
+          hours: 'Mon – Fri, 9:30 AM – 5:30 PM',
+          email: 'gm-dic-hyd@telangana.gov.in',
+        },
+        role: 'Project report preparation support, EDP training & margin money subsidy clearance',
+        query: 'District Industries Centre Chirag Ali Lane Abids Hyderabad',
+      },
+      {
+        name: 'State Scheduled Castes Development Corporation (SCA)',
+        type: 'SCA',
+        branch: 'Lucknow District Office',
+        address: 'Vikas Bhawan, Collectorate Complex, Lucknow, Uttar Pradesh 226001',
+        city: 'Lucknow',
+        state: 'Uttar Pradesh',
+        contact: {
+          phone: '0522-2621000 / 1800-180-8000',
+          hours: 'Mon – Fri, 10:00 AM – 5:00 PM',
+          email: 'sca-lucknow@up.gov.in',
+        },
+        role: 'Direct subsidy disbursement, application verification & NSFDC/NSKFDC facilitation',
+        query: 'State Scheduled Castes Development Corporation Vikas Bhawan Lucknow',
+      },
+      {
+        name: 'State Bank of India — Lead District Office',
+        type: 'Bank',
+        branch: 'Lucknow Main Administrative Branch',
+        address: 'Station Road, Civil Lines, Lucknow, Uttar Pradesh 226001',
+        city: 'Lucknow',
+        state: 'Uttar Pradesh',
+        contact: {
+          phone: '0522-2234000 / 1800-1234-724',
+          hours: 'Mon – Sat, 10:00 AM – 4:00 PM',
+          email: 'leadbank.lucknow@sbi.co.in',
+        },
+        role: 'Concessional term loan sanctions, Mudra/PM-DAKSH credit line processing',
+        query: 'Lead Bank District Office SBI Station Road Civil Lines Lucknow',
+      },
+      {
+        name: 'District Industries Centre (DIC)',
+        type: 'DIC',
+        branch: 'Industrial Area Office, Lucknow',
+        address: 'DIC Compound, Near Subhash Chowk, Lucknow, Uttar Pradesh 226007',
+        city: 'Lucknow',
+        state: 'Uttar Pradesh',
+        contact: {
+          phone: '0522-2435000',
+          hours: 'Mon – Fri, 9:30 AM – 5:30 PM',
+          email: 'dic-lucknow@up.gov.in',
+        },
+        role: 'Project report preparation support, EDP training & margin money subsidy clearance',
+        query: 'District Industries Centre DIC Compound Near Subhash Chowk Lucknow',
+      },
+    ];
+
+    for (const partnerData of defaultPartners) {
+      await Partner.findOneAndUpdate(
+        { name: partnerData.name, city: partnerData.city },
+        partnerData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    }
+
     const all = await Scheme.find({});
+    const allPartners = await Partner.find({});
     res.status(200).json({
       success: true,
-      message: 'Sample government schemes seeded successfully',
+      message: 'Sample government schemes and local channel partners seeded successfully',
       count: all.length,
       schemes: all,
+      partners_count: allPartners.length,
+      partners: allPartners,
     });
   } catch (error) {
     next(error);

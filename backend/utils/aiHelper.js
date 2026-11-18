@@ -25,18 +25,26 @@ async function callGeminiWithRetry(ai, modelName, contents, config, retries = 3)
       const msg = (error.message || '') + ' ' + (error.stack || '') + ' ' + String(error);
       const status = error.status || error.code || error.statusCode || (error.response && error.response.status);
 
-      // Check if it's a 503, high demand, unavailable, or rate-limited error
+      // If quota is exhausted (429), fail fast immediately to fallback without retrying
+      const isQuotaExhausted =
+        status === 429 ||
+        msg.includes('RESOURCE_EXHAUSTED') ||
+        msg.includes('Quota exceeded') ||
+        msg.includes('rate-limit');
+
+      if (isQuotaExhausted) {
+        throw error;
+      }
+
+      // Check if it's a 503, high demand, unavailable, or transient server error
       const isTransient =
         status === 503 ||
-        status === 429 ||
         status === 500 ||
         status === 'UNAVAILABLE' ||
         msg.includes('503') ||
         msg.includes('UNAVAILABLE') ||
         msg.includes('high demand') ||
-        msg.includes('overloaded') ||
-        msg.includes('RESOURCE_EXHAUSTED') ||
-        msg.includes('429');
+        msg.includes('overloaded');
 
       if (isTransient) {
         if (i === retries - 1) {

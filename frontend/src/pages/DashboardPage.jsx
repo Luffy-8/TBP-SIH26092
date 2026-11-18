@@ -397,10 +397,11 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Local Channel Partner Cards (Feature 5: Section 4.5) */}
-            {result.matched_count > 0 && (
-              <ChannelPartnerCards city={result.extracted_profile?.city} />
-            )}
+            {/* Local Channel Partner Cards (Phase 5: Section 4.5) */}
+            <ChannelPartnerCards
+              partners={result.local_partners}
+              city={result.extracted_profile?.city}
+            />
           </div>
         )}
       </main>

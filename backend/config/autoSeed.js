@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Scheme = require('../models/Scheme');
+const Partner = require('../models/Partner');
 
 const autoSeedDatabase = async () => {
   try {
@@ -74,6 +75,112 @@ const autoSeedDatabase = async () => {
       }
       console.log('🌱 5 default government schemes successfully seeded in MongoDB.');
     }
+
+    // 3. Ensure sample channel partners exist (Hyderabad & Lucknow)
+    const defaultPartners = [
+      // Hyderabad Partners
+      {
+        name: 'Telangana State Scheduled Castes Co-operative Finance Corporation (TSSCCFC)',
+        type: 'SCA',
+        branch: 'Hyderabad District & State Head Office',
+        address: '5th Floor, DSS Bhavan, Masab Tank, Hyderabad, Telangana 500028',
+        city: 'Hyderabad',
+        state: 'Telangana',
+        contact: {
+          phone: '040-23391234 / 1800-425-1234',
+          hours: 'Mon – Fri, 10:00 AM – 5:00 PM',
+          email: 'support@tssccfc.telangana.gov.in',
+        },
+        role: 'Direct subsidy disbursement, application verification & NSFDC/NSKFDC facilitation',
+        query: 'Telangana State Scheduled Castes Co-operative Finance Corporation DSS Bhavan Masab Tank Hyderabad',
+      },
+      {
+        name: 'State Bank of India — Hyderabad Main Branch',
+        type: 'Bank',
+        branch: 'Lead District Office (LDO), Hyderabad Main',
+        address: 'Bank Street, Koti, Hyderabad, Telangana 500095',
+        city: 'Hyderabad',
+        state: 'Telangana',
+        contact: {
+          phone: '040-23466100 / 1800-1234-724',
+          hours: 'Mon – Sat, 10:00 AM – 4:00 PM',
+          email: 'ldo.hyderabad@sbi.co.in',
+        },
+        role: 'Concessional term loan sanctions, Mudra/PM-DAKSH & Stand-Up India credit processing',
+        query: 'State Bank of India Hyderabad Main Branch Bank Street Koti Hyderabad',
+      },
+      {
+        name: 'District Industries Centre (DIC) Hyderabad',
+        type: 'DIC',
+        branch: 'Hyderabad District Industries Centre',
+        address: 'Chirag Ali Lane, Abids, Hyderabad, Telangana 500001',
+        city: 'Hyderabad',
+        state: 'Telangana',
+        contact: {
+          phone: '040-23201400',
+          hours: 'Mon – Fri, 9:30 AM – 5:30 PM',
+          email: 'gm-dic-hyd@telangana.gov.in',
+        },
+        role: 'Project report preparation support, EDP training & margin money subsidy clearance',
+        query: 'District Industries Centre Chirag Ali Lane Abids Hyderabad',
+      },
+
+      // Lucknow Partners
+      {
+        name: 'State Scheduled Castes Development Corporation (SCA)',
+        type: 'SCA',
+        branch: 'Lucknow District Office',
+        address: 'Vikas Bhawan, Collectorate Complex, Lucknow, Uttar Pradesh 226001',
+        city: 'Lucknow',
+        state: 'Uttar Pradesh',
+        contact: {
+          phone: '0522-2621000 / 1800-180-8000',
+          hours: 'Mon – Fri, 10:00 AM – 5:00 PM',
+          email: 'sca-lucknow@up.gov.in',
+        },
+        role: 'Direct subsidy disbursement, application verification & NSFDC/NSKFDC facilitation',
+        query: 'State Scheduled Castes Development Corporation Vikas Bhawan Lucknow',
+      },
+      {
+        name: 'State Bank of India — Lead District Office',
+        type: 'Bank',
+        branch: 'Lucknow Main Administrative Branch',
+        address: 'Station Road, Civil Lines, Lucknow, Uttar Pradesh 226001',
+        city: 'Lucknow',
+        state: 'Uttar Pradesh',
+        contact: {
+          phone: '0522-2234000 / 1800-1234-724',
+          hours: 'Mon – Sat, 10:00 AM – 4:00 PM',
+          email: 'leadbank.lucknow@sbi.co.in',
+        },
+        role: 'Concessional term loan sanctions, Mudra/PM-DAKSH credit line processing',
+        query: 'Lead Bank District Office SBI Station Road Civil Lines Lucknow',
+      },
+      {
+        name: 'District Industries Centre (DIC)',
+        type: 'DIC',
+        branch: 'Industrial Area Office, Lucknow',
+        address: 'DIC Compound, Near Subhash Chowk, Lucknow, Uttar Pradesh 226007',
+        city: 'Lucknow',
+        state: 'Uttar Pradesh',
+        contact: {
+          phone: '0522-2435000',
+          hours: 'Mon – Fri, 9:30 AM – 5:30 PM',
+          email: 'dic-lucknow@up.gov.in',
+        },
+        role: 'Project report preparation support, EDP training & margin money subsidy clearance',
+        query: 'District Industries Centre DIC Compound Near Subhash Chowk Lucknow',
+      },
+    ];
+
+    for (const partnerData of defaultPartners) {
+      await Partner.findOneAndUpdate(
+        { name: partnerData.name, city: partnerData.city },
+        partnerData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    }
+    console.log('🌱 Sample channel partners for Hyderabad and Lucknow successfully seeded in MongoDB.');
   } catch (error) {
     console.warn('⚠️ Auto-seed notification:', error.message);
   }

@@ -8,6 +8,7 @@ const schemeRoutes = require('./routes/schemeRoutes');
 // Import models to ensure they are registered with Mongoose
 require('./models/User');
 require('./models/Scheme');
+require('./models/Partner');
 
 const app = express();
 
