@@ -23,6 +23,10 @@ const demographicsSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    state: {
+      type: String,
+      trim: true,
+    },
   },
   { _id: false }
 );

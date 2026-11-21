@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   Award,
   Calculator,
+  Scale,
 } from 'lucide-react';
 import SchemeEmiCalculator from './SchemeEmiCalculator';
 
@@ -25,7 +26,7 @@ function getAuthorityTag(authority) {
   return { key: 'Govt. Scheme', cls: 'bg-gray-100 text-gray-800 border-gray-200' };
 }
 
-export default function SchemeCard({ scheme, breakdown }) {
+export default function SchemeCard({ scheme, breakdown, compareSelected, onToggleCompare }) {
   const [docsExpanded, setDocsExpanded] = useState(false);
   const [auditExpanded, setAuditExpanded] = useState(false);
   const [emiExpanded, setEmiExpanded] = useState(false);
@@ -52,8 +53,23 @@ export default function SchemeCard({ scheme, breakdown }) {
               {scheme.issuing_authority}
             </p>
           </div>
-          <div className="shrink-0 w-10 h-10 bg-green-50 border border-green-200 rounded-full flex items-center justify-center">
-            <CheckCircle size={22} className="text-green-600" />
+          <div className="shrink-0 flex flex-col items-end gap-2">
+            <button
+              type="button"
+              onClick={onToggleCompare}
+              title="Add to side-by-side comparison"
+              className={`flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer active:scale-95 ${
+                compareSelected
+                  ? 'bg-orange-600 text-white border-orange-600 hover:bg-orange-700'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-orange-400 hover:text-orange-700'
+              }`}
+            >
+              <Scale size={13} />
+              <span>{compareSelected ? 'Comparing' : 'Compare'}</span>
+            </button>
+            <div className="w-10 h-10 bg-green-50 border border-green-200 rounded-full flex items-center justify-center">
+              <CheckCircle size={22} className="text-green-600" />
+            </div>
           </div>
         </div>
 

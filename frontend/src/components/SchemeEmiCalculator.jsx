@@ -172,6 +172,22 @@ export default function SchemeEmiCalculator({ scheme }) {
           </div>
         </div>
 
+        {/* Total Repayment & Interest Breakdown */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className="p-2.5 bg-white border border-gray-200 rounded-xl text-center">
+            <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Monthly EMI</p>
+            <p className="text-sm font-extrabold text-gray-900 mt-0.5">₹{schemeEMI.toLocaleString('en-IN')}</p>
+          </div>
+          <div className="p-2.5 bg-white border border-gray-200 rounded-xl text-center">
+            <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Total Interest</p>
+            <p className="text-sm font-extrabold text-gray-900 mt-0.5">₹{totalSchemeInterest.toLocaleString('en-IN')}</p>
+          </div>
+          <div className="p-2.5 bg-white border border-gray-200 rounded-xl text-center">
+            <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Total Repayment</p>
+            <p className="text-sm font-extrabold text-gray-900 mt-0.5">₹{(loanAmount + totalSchemeInterest).toLocaleString('en-IN')}</p>
+          </div>
+        </div>
+
         {/* Highlighted Subsidy / Interest Saved Badge */}
         <div className="p-3 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between">
           <div className="flex items-center gap-2">

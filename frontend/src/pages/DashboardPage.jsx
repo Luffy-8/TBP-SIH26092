@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
-import { Mic, MicOff, Send, Loader2, Sparkles, UserCheck, RefreshCw } from 'lucide-react';
+import { Mic, MicOff, Send, Loader2, Sparkles, UserCheck, RefreshCw, Scale } from 'lucide-react';
 import api from '../api/client';
 import Header from '../components/Header';
 import SchemeCard from '../components/SchemeCard';
+import SchemeComparison from '../components/SchemeComparison';
 import DocumentChecklist from '../components/DocumentChecklist';
 import ChannelPartnerCards from '../components/ChannelPartnerCards';
 import { useAuth } from '../context/AuthContext';
@@ -54,8 +55,17 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
   const [placeholder] = useState(PLACEHOLDER_TEXTS[Math.floor(Math.random() * PLACEHOLDER_TEXTS.length)]);
   const [isListening, setIsListening] = useState(false);
+  const [compareIds, setCompareIds] = useState([]);
   const recognitionRef = useRef(null);
   const resultsRef = useRef(null);
+
+  const toggleCompare = (schemeId) => {
+    setCompareIds((prev) =>
+      prev.includes(schemeId) ? prev.filter((id) => id !== schemeId) : [...prev, schemeId]
+    );
+  };
+
+  const compareSchemes = (result?.schemes || []).filter((s) => compareIds.includes(s._id));
 
   const toggleListening = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -91,6 +101,7 @@ export default function DashboardPage() {
     setLoading(true);
     setError('');
     setResult(null);
+    setCompareIds([]);
     try {
       const { data } = await api.post('/schemes/analyze', { text });
       setResult(data);
@@ -372,6 +383,8 @@ export default function DashboardPage() {
                     key={scheme._id}
                     scheme={scheme}
                     breakdown={getBreakdown(scheme.name)}
+                    compareSelected={compareIds.includes(scheme._id)}
+                    onToggleCompare={() => toggleCompare(scheme._id)}
                   />
                 ))}
               </div>
@@ -396,6 +409,14 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
+
+            {/* Side-by-side Scheme Comparison */}
+            {compareSchemes.length > 0 && (
+              <SchemeComparison
+                schemes={compareSchemes}
+                onRemove={(s) => toggleCompare(s._id)}
+              />
+            )}
 
             {/* Local Channel Partner Cards (Phase 5: Section 4.5) */}
             <ChannelPartnerCards

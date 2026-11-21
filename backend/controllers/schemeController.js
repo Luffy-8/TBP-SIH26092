@@ -10,6 +10,25 @@ const { extractDemographicsFromText, generateSchemeExplanation } = require('../u
  * @param {Object} profile - Extracted user demographic profile
  * @returns {Promise<Array>} List of eligible schemes with audit reasoning
  */
+const GENDER_ALIASES = {
+  F: 'FEMALE',
+  M: 'MALE',
+  WOMAN: 'FEMALE',
+  WOMEN: 'FEMALE',
+  GIRL: 'FEMALE',
+  MAN: 'MALE',
+  MEN: 'MALE',
+  BOY: 'MALE',
+  TRANS: 'TRANSGENDER',
+  TRANSGENDER: 'TRANSGENDER',
+};
+
+const normalizeGender = (g) => {
+  if (!g) return null;
+  const key = String(g).toUpperCase().trim();
+  return GENDER_ALIASES[key] || key;
+};
+
 const matchSchemes = async (profile) => {
   // Fetch all schemes from MongoDB
   const allSchemes = await Scheme.find({});
@@ -65,7 +84,53 @@ const matchSchemes = async (profile) => {
 
     if (!isEligible) continue;
 
-    // 3. Minimum Age Audit
+    // 3. Gender Eligibility Audit
+    if (criteria.target_gender && criteria.target_gender.length > 0) {
+      const normalizedGenders = criteria.target_gender.map((g) => normalizeGender(g));
+      const genderWildcard = normalizedGenders.includes('ALL') || normalizedGenders.includes('ANY');
+
+      if (profile.gender) {
+        const userGender = normalizeGender(profile.gender);
+        const matchesGender = normalizedGenders.includes(userGender) || genderWildcard;
+
+        if (matchesGender) {
+          auditLog.push(`Gender match: Scheme targets [${criteria.target_gender.join(', ')}], which includes the applicant's gender (${profile.gender}).`);
+        } else {
+          isEligible = false;
+        }
+      } else if (!genderWildcard) {
+        auditLog.push(`Gender verification pending: Scheme requires gender [${criteria.target_gender.join(', ')}].`);
+      }
+    } else {
+      auditLog.push('Open to applicants of all genders.');
+    }
+
+    if (!isEligible) continue;
+
+    // 4. State Eligibility Audit
+    if (criteria.eligible_states && criteria.eligible_states.length > 0) {
+      const normalizedStates = criteria.eligible_states.map((s) => s.toUpperCase().trim());
+      const stateWildcard = normalizedStates.includes('ALL') || normalizedStates.includes('ANY') || normalizedStates.includes('PAN-INDIA');
+
+      if (profile.state) {
+        const userState = profile.state.toUpperCase().trim();
+        const matchesState = normalizedStates.includes(userState) || stateWildcard;
+
+        if (matchesState) {
+          auditLog.push(`State match: Scheme is available in [${criteria.eligible_states.join(', ')}], which includes the applicant's state (${profile.state}).`);
+        } else {
+          isEligible = false;
+        }
+      } else if (!stateWildcard) {
+        auditLog.push(`State verification pending: Scheme is restricted to [${criteria.eligible_states.join(', ')}].`);
+      }
+    } else {
+      auditLog.push('Available pan-India across all states.');
+    }
+
+    if (!isEligible) continue;
+
+    // 5. Minimum Age Audit
     if (criteria.min_age !== undefined && criteria.min_age !== null) {
       if (profile.age !== null && profile.age !== undefined) {
         if (profile.age >= criteria.min_age) {
@@ -124,6 +189,7 @@ const analyzeProfile = async (req, res, next) => {
             category: extractedDemographics.category,
             annual_income: extractedDemographics.annual_income,
             city: extractedDemographics.city,
+            state: extractedDemographics.state,
           },
         },
       },
@@ -373,10 +439,52 @@ const getAllSchemes = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Search channel partners by city and/or state (public partner locator)
+ * @route   GET /api/schemes/partners?city=Hyderabad&state=Telangana
+ * @access  Public
+ */
+const getPartners = async (req, res, next) => {
+  try {
+    const { city, state } = req.query;
+    const filter = {};
+
+    if (city && city.trim()) {
+      filter.city = { $regex: city.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\module.exports = {
+  matchSchemes,
+  analyzeProfile,
+  seedSampleSchemes,
+  getAllSchemes,
+};'), $options: 'i' };
+    }
+    if (state && state.trim()) {
+      filter.state = { $regex: state.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\module.exports = {
+  matchSchemes,
+  analyzeProfile,
+  seedSampleSchemes,
+  getAllSchemes,
+};'), $options: 'i' };
+    }
+
+    const partners = Object.keys(filter).length > 0
+      ? await Partner.find(filter).lean()
+      : await Partner.find({}).lean();
+
+    res.status(200).json({
+      success: true,
+      count: partners.length,
+      partners,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   matchSchemes,
   analyzeProfile,
   seedSampleSchemes,
   getAllSchemes,
+  getPartners,
 };
 

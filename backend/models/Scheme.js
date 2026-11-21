@@ -10,6 +10,14 @@ const eligibilityCriteriaSchema = new mongoose.Schema(
       type: [String], // Array of targeted categories (e.g., ['SC', 'ST', 'OBC', 'Safai Karamchari', 'All'])
       default: [],
     },
+    target_gender: {
+      type: [String], // e.g., ['Female'], ['Transgender'], or [] / ['All'] for open-to-all
+      default: [],
+    },
+    eligible_states: {
+      type: [String], // e.g., ['Telangana', 'Karnataka']; empty or ['All'] means pan-India
+      default: [],
+    },
     min_age: {
       type: Number,
       default: 18,

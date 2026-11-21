@@ -11,6 +11,9 @@ const { protect } = require('../middleware/authMiddleware');
 // Public route to view all schemes
 router.get('/', getAllSchemes);
 
+// Public partner locator search (by city and/or state)
+router.get('/partners', getPartners);
+
 // Route to seed standard MoSJE/NSFDC welfare schemes for testing & initialization
 router.post('/seed', seedSampleSchemes);
 

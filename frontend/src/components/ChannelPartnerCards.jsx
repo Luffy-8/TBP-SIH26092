@@ -1,7 +1,9 @@
-import { MapPin, Navigation, Phone, Clock, Building, ExternalLink, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { MapPin, Navigation, Phone, Clock, Building, ExternalLink, AlertCircle, Search } from 'lucide-react';
 
-export default function ChannelPartnerCards({ partners = [], city }) {
+export default function ChannelPartnerCards({ partners = [], city, onSearchLocation }) {
   const displayCity = city?.trim() || '';
+  const [searchCity, setSearchCity] = useState(displayCity);
 
   const formatPartnerType = (type) => {
     switch ((type || '').toUpperCase()) {
@@ -32,9 +34,35 @@ export default function ChannelPartnerCards({ partners = [], city }) {
             Visit these authorized agencies to submit your application packet and complete physical verification.
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg shrink-0">
-          <MapPin size={14} className="text-orange-600" />
-          <span>Location: {displayCity || 'Not specified'}</span>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 text-xs font-semibold text-gray-700 shrink-0">
+          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg">
+            <MapPin size={14} className="text-orange-600" />
+            <span>Location: {displayCity || 'Not specified'}</span>
+          </div>
+          {onSearchLocation && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (searchCity.trim()) onSearchLocation(searchCity.trim());
+              }}
+              className="flex items-center gap-1.5"
+            >
+              <input
+                type="text"
+                value={searchCity}
+                onChange={(e) => setSearchCity(e.target.value)}
+                placeholder="Search another city..."
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent w-40"
+              />
+              <button
+                type="submit"
+                title="Search partners in this city"
+                className="bg-orange-600 hover:bg-orange-700 text-white rounded-lg px-2.5 py-1.5 transition active:scale-95 cursor-pointer"
+              >
+                <Search size={14} />
+              </button>
+            </form>
+          )}
         </div>
       </div>
 

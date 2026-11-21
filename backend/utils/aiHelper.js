@@ -1,6 +1,86 @@
 const { GoogleGenAI } = require('@google/genai');
 
 /**
+ * Hugging Face pretrained zero-shot classification layer (facebook/bart-large-mnli).
+ * Acts as a second AI layer alongside Gemini: refines demographic classification
+ * in the fallback path and can validate Gemini output. Degrades silently to
+ * pure heuristics when HUGGINGFACE_API_KEY is missing or the endpoint is unreachable.
+ */
+const HF_MODEL = process.env.HUGGINGFACE_MODEL || 'facebook/bart-large-mnli';
+
+const hfZeroShotClassify = async (text, labels) => {
+  const apiKey = process.env.HUGGINGFACE_API_KEY || process.env.HF_TOKEN;
+  if (!apiKey || !text || labels.length === 0) return null;
+
+  const response = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      inputs: String(text).slice(0, 512),
+      parameters: { candidate_labels: labels, multi_label: true },
+    }),
+    signal: AbortSignal.timeout(8000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HF Inference API error ${response.status}`);
+  }
+
+  const data = await response.json();
+  if (!data || !Array.isArray(data.labels) || !Array.isArray(data.scores)) return null;
+  return data;
+};
+
+const GENDER_LABELS = ['female', 'male', 'transgender'];
+const CATEGORY_LABELS = [
+  'scheduled caste',
+  'scheduled tribe',
+  'other backward class',
+  'safai karamchari',
+  'denotified nomadic tribe',
+  'general category',
+];
+
+const CATEGORY_CODE_MAP = {
+  'scheduled caste': 'SC',
+  'scheduled tribe': 'ST',
+  'other backward class': 'OBC',
+  'safai karamchari': 'SAFAI KARAMCHARI',
+  'denotified nomadic tribe': 'DNT',
+  'general category': 'GENERAL',
+};
+
+/**
+ * Uses the HF pretrained model to refine gender/category fields when the primary
+ * AI (Gemini) is unavailable. Returns only the fields it can classify confidently.
+ */
+const hfRefineDemographics = async (rawText) => {
+  const refined = {};
+  try {
+    const genderResult = await hfZeroShotClassify(rawText, GENDER_LABELS);
+    if (genderResult && genderResult.scores[0] >= 0.5) {
+      refined.gender = genderResult.labels[0].charAt(0).toUpperCase() + genderResult.labels[0].slice(1);
+    }
+  } catch (err) {
+    console.warn(`⚠️ HF gender classification unavailable (${err.message}).`);
+  }
+
+  try {
+    const categoryResult = await hfZeroShotClassify(rawText, CATEGORY_LABELS);
+    if (categoryResult && categoryResult.scores[0] >= 0.5) {
+      refined.category = CATEGORY_CODE_MAP[categoryResult.labels[0]] || null;
+    }
+  } catch (err) {
+    console.warn(`⚠️ HF category classification unavailable (${err.message}).`);
+  }
+
+  return refined;
+};
+
+/**
  * Robust caller for Gemini models with exponential backoff retry logic.
  * Automatically catches 503 (UNAVAILABLE / high demand), 429 (rate limits),
  * waits with exponential backoff (1s, 2s, 4s), and retries up to 3 times before throwing.
@@ -122,7 +202,22 @@ const heuristicFallbackExtraction = (rawText) => {
     }
   }
 
-  return { age, gender, category, annual_income, city };
+  // 6. State extraction (best-effort; paired with city)
+  let state = null;
+  const stateNames = [
+    'Andhra Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Delhi', 'Goa', 'Gujarat', 'Haryana',
+    'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra',
+    'Odisha', 'Punjab', 'Rajasthan', 'Tamil Nadu', 'Telangana', 'Uttar Pradesh', 'Uttarakhand',
+    'West Bengal', 'Jammu and Kashmir', 'Jammu & Kashmir',
+  ];
+  for (const s of stateNames) {
+    if (new RegExp(`\\b${s}\\b`, 'i').test(rawText)) {
+      state = s;
+      break;
+    }
+  }
+
+  return { age, gender, category, annual_income, city, state };
 };
 
 /**
@@ -131,7 +226,7 @@ const heuristicFallbackExtraction = (rawText) => {
  * If the Gemini API is temporarily unavailable (503), fails gracefully to heuristic extraction.
  * 
  * @param {string} rawText - Natural language input from user
- * @returns {Promise<{ age: number|null, gender: string|null, category: string|null, annual_income: number|null, city: string|null }>}
+ * @returns {Promise<{ age: number|null, gender: string|null, category: string|null, annual_income: number|null, city: string|null, state: string|null }>}
  */
 const extractDemographicsFromText = async (rawText) => {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -156,7 +251,8 @@ CRITICAL SECURITY & PRIVACY RULES:
      "gender": string or null (e.g. "Male", "Female", "Transgender", "Other"),
      "category": string or null (e.g. "SC", "ST", "OBC", "Safai Karamchari", "General", "DNT"),
      "annual_income": number or null,
-     "city": string or null (extract ONLY the city/town/district name, strip street/colony/house details)
+     "city": string or null (extract ONLY the city/town/district name, strip street/colony/house details),
+     "state": string or null (Indian state or union territory, e.g. "Telangana", "Uttar Pradesh")
    }
 3. CURRENCY CONVERSION RULE:
    Convert Indian numbering expressions into full annual numerical integers:
@@ -198,10 +294,13 @@ CRITICAL SECURITY & PRIVACY RULES:
       category: parsedData.category ? String(parsedData.category).toUpperCase().trim() : null,
       annual_income: typeof parsedData.annual_income === 'number' ? parsedData.annual_income : null,
       city: parsedData.city ? String(parsedData.city).trim() : null,
+      state: parsedData.state ? String(parsedData.state).trim() : null,
     };
   } catch (error) {
-    console.warn(`⚠️ Gemini Demographic Extraction unavailable (${error.message}). Using resilient fallback extraction.`);
-    return heuristicFallbackExtraction(rawText);
+    console.warn(`⚠️ Gemini Demographic Extraction unavailable (${error.message}). Using HF-assisted fallback extraction.`);
+    const heuristics = heuristicFallbackExtraction(rawText);
+    const hfRefined = await hfRefineDemographics(rawText);
+    return { ...heuristics, ...Object.fromEntries(Object.entries(hfRefined).filter(([, v]) => v != null)) };
   }
 };
 
@@ -339,4 +438,6 @@ module.exports = {
   callGeminiWithRetry,
   extractDemographicsFromText,
   generateSchemeExplanation,
+  hfZeroShotClassify,
+  hfRefineDemographics,
 };
